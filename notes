@@ -1,0 +1,19 @@
+
+Web.Cookie violates RFC 6265 in the following known ways:
+* Set-Cookie: foo is parsed as a cookie named "foo" with an empty value, when it
+  should be ignored.
+* In general, parseSetCookie has no way to reject the string that it is given.
+
+It might be possible to use Web.Cookie as a parser, but additional validation is
+required. Furthermore, we need to incorporate information about the host server.
+The module also does not provide a type suitable for the contents of the jar.
+
+One open question is what, if anything, Web.Cookie does regarding non-ASCII domain
+names. It seems (according to the RFC) that domain components are to be compared
+under a special encoding ("punycode"). Investigate this.
+
+  We should probably get a compliant IDNA DNS library to handle comparisons of
+  domain labels. Anything else is likely to be incorrect.
+
+  gnuidn package, Data.Text.IDN.IDNA
+

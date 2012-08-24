@@ -1,0 +1,4 @@
+OverloadedStrings
+RecordWildCards
+ScopedTypeVariables
+TupleSections

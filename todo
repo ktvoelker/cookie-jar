@@ -1,0 +1,19 @@
+
+To-Do
+=====
+
+* Define the type of endpoints
+
+* Define the type of Set-Cookie headers
+
+* Write a Set-Cookie parser
+
+* Define the type of a cookie-in-a-jar
+
+* Implement receive
+  * The rules don't need to see all the cookies at once, so just take one at a time
+
+* Implement send and sendHeaders
+
+* Use gnuidn to convert the binary data to text to provide IDNA compatibility
+
