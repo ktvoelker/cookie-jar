@@ -7,20 +7,37 @@ module Web.CookieJar
 import qualified Data.ByteString as BS
 
 import Data.Maybe
+import Data.Time
 import Network.HTTP.Types
+
+type Time = UTCTime
+
+type Bytes = BS.ByteString
 
 -- TODO
 type Cookie = ()
 
 newtype Jar = Jar { getCookies :: [Cookie] }
 
--- TODO
-type Endpoint = ()
+data Endpoint =
+  Endpoint
+  { epDomain :: Bytes
+  , epPath   :: Bytes
+  } deriving (Show)
 
--- TODO
-type SetCookie = ()
+data SetCookie =
+  SetCookie
+  { scName     :: Bytes
+  , scValue    :: Bytes
+  , scDomain   :: Maybe Bytes
+  , scPath     :: Maybe Bytes
+  , scSecure   :: Maybe Bool
+  , scHttpOnly :: Maybe Bool
+  , scExpires  :: Maybe Time
+  , scMaxAge   :: Maybe Integer
+  }
 
-parseSetCookie :: BS.ByteString -> Maybe SetCookie
+parseSetCookie :: Bytes -> Maybe SetCookie
 parseSetCookie bs = undefined
 
 receive :: Endpoint -> SetCookie -> Jar -> Jar
@@ -29,13 +46,13 @@ receive = undefined
 send :: Jar -> Endpoint -> [Cookie]
 send = undefined
 
-receiveHeaders :: Endpoint -> ResponseHeaders -> Jar -> Jar
+receiveHeaders :: Time -> Endpoint -> ResponseHeaders -> Jar -> Jar
 receiveHeaders host =
   flip (foldr $ receive host)
   . catMaybes
   . map (parseSetCookie . snd)
   . filter ((== "Set-Cookie") . fst)
 
-sendHeaders :: Jar -> Endpoint -> RequestHeaders
+sendHeaders :: Time -> Jar -> Endpoint -> RequestHeaders
 sendHeaders = undefined
 

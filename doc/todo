@@ -2,15 +2,14 @@
 To-Do
 =====
 
-* Define the type of endpoints
-
-* Define the type of Set-Cookie headers
-
 * Write a Set-Cookie parser
+  * This includes a date and time parser
+
+* Implement the domain-match algorithm
 
 * Define the type of a cookie-in-a-jar
 
-* Implement receive
+* Implement the receiving algorithm
   * The rules don't need to see all the cookies at once, so just take one at a time
 
 * Implement send and sendHeaders
