@@ -2,3 +2,4 @@ OverloadedStrings
 RecordWildCards
 ScopedTypeVariables
 TupleSections
+ViewPatterns

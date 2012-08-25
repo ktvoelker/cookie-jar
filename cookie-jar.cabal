@@ -29,4 +29,5 @@ Library
     RecordWildCards
     ScopedTypeVariables
     TupleSections
+    ViewPatterns
 
