@@ -5,6 +5,8 @@ module Web.CookieJar
   ) where
 
 import qualified Data.ByteString as BS
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as E
 
 import Control.Monad
 import Data.Maybe
@@ -106,18 +108,98 @@ parseTimeToken bs = do
   let [hour, min, secPlus] = map BS.unpack $ take 3 $ BS.split colon bs
   let sec = takeWhile isDigit secPlus
   let fs = [hour, min, sec]
-  guard $ all ((>= 1) . length) fs
-  guard $ all ((<= 2) . length) fs
+  guard $ all (lengthRange 1 2) fs
   let [Just iHour, Just iMin, Just iSec] = map digitsValue fs
   return (iHour, iMin, iSec)
 
-parseDateToken :: Bytes -> DateFields -> DateFields
-parseDateToken bs df = undefined
+lengthRange :: Int -> Int -> [a] -> Bool
+lengthRange lo hi xs = let n = length xs in lo <= n && n <= hi
 
-parseDate :: Bytes -> DateFields
-parseDate =
+parseDayOfMonthToken :: Bytes -> Maybe Int
+parseDayOfMonthToken = parseIntToken 1 2
+
+parseYearToken :: Bytes -> Maybe Int
+parseYearToken = parseIntToken 2 4
+
+parseIntToken :: Int -> Int -> Bytes -> Maybe Int
+parseIntToken lo hi bs = do
+  let ds = takeWhile isDigit $ BS.unpack bs
+  guard $ lengthRange lo hi ds
+  digitsValue ds
+
+months :: [(Bytes, Int)]
+months =
+  flip zip [1 ..]
+  $ map E.encodeUtf8
+  $ [ "jan"
+    , "feb"
+    , "mar"
+    , "apr"
+    , "may"
+    , "jun"
+    , "jul"
+    , "aug"
+    , "sep"
+    , "oct"
+    , "nov"
+    , "dec"
+    ]
+
+-- TODO case-insensitive?
+parseMonthToken :: Bytes -> Maybe Int
+parseMonthToken = flip lookup months . BS.take 3
+
+parseDateToken :: Bytes -> DateFields -> DateFields
+parseDateToken bs df
+  | dfTime df == Nothing && isJust timeToken
+    = df { dfTime = timeToken }
+  | dfDayOfMonth df == Nothing && isJust domToken
+    = df { dfDayOfMonth = domToken }
+  | dfMonth df == Nothing && isJust monthToken
+    = df { dfMonth = monthToken }
+  | dfYear df == Nothing && isJust yearToken
+    = df { dfYear = yearToken }
+  | otherwise
+    = df
+  where
+    timeToken  = parseTimeToken bs
+    domToken   = parseDayOfMonthToken bs
+    monthToken = parseMonthToken bs
+    yearToken  = parseYearToken bs
+
+parseDateFields :: Bytes -> DateFields
+parseDateFields =
   foldr parseDateToken (DateFields Nothing Nothing Nothing Nothing)
   . tokenizeDate
+
+parseDate :: Bytes -> Maybe Time
+parseDate bs = case parseDateFields bs of
+  DateFields
+    { dfTime = Just (hour, min, sec)
+    , dfDayOfMonth = Just dom
+    , dfMonth = Just month
+    , dfYear = Just year
+    } -> do
+      let
+      { year'
+        = if year >= 0 && year <= 69
+          then year + 2000
+          else
+            if year >= 70 && year <= 99
+            then year + 1900
+            else year
+      }
+      guard
+        $  dom >= 1
+        && dom <= 31
+        && year' < 1601
+        && hour <= 23
+        && min <= 59
+        && sec <= 59
+      day <- fromGregorianValid (fromIntegral year') month dom
+      let tod = secondsToDiffTime . fromIntegral $ sec + min * 60 + hour * 3600
+      return $ UTCTime day tod
+  _ -> Nothing
 
 receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
 receive = undefined

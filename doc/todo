@@ -3,7 +3,6 @@ To-Do
 =====
 
 * Write a Set-Cookie parser
-  * This includes a date and time parser
 
 * Implement the domain-match algorithm
 
