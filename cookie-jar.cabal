@@ -1,0 +1,32 @@
+
+name: cookie-jar
+version: 0.1.0.0
+cabal-version: >= 1.10
+build-type: Simple
+license: GPL
+license-file: LICENSE
+copyright: (c) 2012 Karl Voelker
+stability: unstable
+homepage: https://github.com/ktvoelker/cookie-jar
+maintainer: Karl Voelker <ktvoelker@gmail.com>
+synopsis: An HTTP cookie client based on RFC-6265
+description: TODO
+category: Web
+author: Karl Voelker <ktvoelker@gmail.com>
+
+Library
+  build-depends:
+    base >= 3 && < 5,
+    bytestring -any,
+    http-types -any,
+    time -any
+  exposed-modules:
+    Web.CookieJar
+  hs-source-dirs: src
+  default-language: Haskell2010
+  default-extensions:
+    OverloadedStrings
+    RecordWildCards
+    ScopedTypeVariables
+    TupleSections
+

@@ -40,15 +40,15 @@ data SetCookie =
 parseSetCookie :: Bytes -> Maybe SetCookie
 parseSetCookie bs = undefined
 
-receive :: Endpoint -> SetCookie -> Jar -> Jar
+receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
 receive = undefined
 
-send :: Jar -> Endpoint -> [Cookie]
+send :: Time -> Jar -> Endpoint -> [Cookie]
 send = undefined
 
 receiveHeaders :: Time -> Endpoint -> ResponseHeaders -> Jar -> Jar
-receiveHeaders host =
-  flip (foldr $ receive host)
+receiveHeaders time host =
+  flip (foldr $ receive time host)
   . catMaybes
   . map (parseSetCookie . snd)
   . filter ((== "Set-Cookie") . fst)
