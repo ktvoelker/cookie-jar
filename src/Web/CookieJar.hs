@@ -41,8 +41,30 @@ data SetCookie =
   , scMaxAge   :: Maybe Integer
   }
 
+emptySetCookie :: Bytes -> Bytes -> SetCookie
+emptySetCookie n v = SetCookie n v Nothing Nothing Nothing Nothing Nothing Nothing
+
+semicolon :: Word8
+semicolon = 0x3B
+
+equals :: Word8
+equals = 0x3D
+
 parseSetCookie :: Bytes -> Maybe SetCookie
-parseSetCookie bs = undefined
+parseSetCookie bs = do
+  guard $ name /= BS.empty
+  (0x3D, value) <- BS.uncons valueWithEquals
+  attrs <- parseAttributes unparsedAttributes
+  return $ foldr ($) (emptySetCookie name value) attrs
+  where
+    (nameValuePair, unparsedAttributes) = BS.span (/= semicolon) bs
+    (name, valueWithEquals) = BS.span (/= equals) nameValuePair
+
+type Attribute = SetCookie -> SetCookie
+
+-- TODO
+parseAttributes :: Bytes -> Maybe [Attribute]
+parseAttributes bs = undefined
 
 isDateDelim :: Word8 -> Bool
 isDateDelim w =

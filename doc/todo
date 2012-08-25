@@ -2,9 +2,11 @@
 To-Do
 =====
 
-* Write a Set-Cookie parser
+* Implement parseAttributes
 
 * Implement the domain-match algorithm
+
+* Implement the path-match algorithm
 
 * Define the type of a cookie-in-a-jar
 
