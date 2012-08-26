@@ -15,8 +15,20 @@ type Time = UTCTime
 
 type Bytes = BS.ByteString
 
--- TODO
-type Cookie = ()
+data Cookie =
+  Cookie
+  { cName     :: Bytes
+  , cValue    :: Bytes
+  , cExpires  :: Maybe Time
+  , cDomain   :: Maybe Bytes
+  , cPath     :: Maybe Bytes
+  , cCreation :: Time
+  , cAccess   :: Time
+  , cPersist  :: Bool
+  , cHostOnly :: Bool
+  , cSecure   :: Bool
+  , cHttpOnly :: Bool
+  } deriving (Show)
 
 newtype Jar = Jar { getCookies :: [Cookie] }
 

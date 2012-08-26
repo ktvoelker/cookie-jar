@@ -1,7 +1,7 @@
 
 module Web.CookieJar
   ( Jar()
-  , getCookies
+  , endpoint
   , receive
   , send
   , receiveHeaders
@@ -12,10 +12,14 @@ import qualified Data.ByteString as BS
 
 import Control.Monad
 import Data.Maybe
+import Data.Time
 
 import Web.CookieJar.Types
 import Web.CookieJar.Parser
 import Web.CookieJar.Parser.Util
+
+endpoint :: Bytes -> Bytes -> Endpoint
+endpoint d p = Endpoint (bytesToLower d) p
 
 domainMatches :: Bytes -> Bytes -> Bool
 domainMatches bs ds
@@ -51,7 +55,29 @@ pathMatches rp cp
     root = BS.pack [slash]
 
 receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
-receive = undefined
+receive now ep@Endpoint{..} SetCookie{..} jar = if abort then jar else Jar $
+  Cookie
+  { cName     = scName
+  , cValue    = scValue
+  , cCreation = now
+  , cAccess   = now
+  , cExpires  = exp
+  , cPersist  = maybe False (const True) exp
+  , cDomain   = scDomain `mplus` Just epDomain
+  , cHostOnly = dMat == Nothing
+  , cPath     = Just path
+  , cSecure   = scSecure
+  , cHttpOnly = scHttpOnly
+  } : getCookies jar
+  where
+    exp   = fmap (flip addUTCTime now . fromIntegral) scMaxAge `mplus` scExpires
+    dMat  = fmap (epDomain `domainMatches`) scDomain
+    -- TODO check for public suffixes and abort as needed
+    abort = dMat == Just False
+    path  = case scPath of
+      Nothing -> defaultPath ep
+      Just DefaultPath -> defaultPath ep
+      Just (Path p) -> p
 
 send :: Time -> Jar -> Endpoint -> [Cookie]
 send = undefined

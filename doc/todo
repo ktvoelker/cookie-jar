@@ -2,12 +2,12 @@
 To-Do
 =====
 
-* Define the type of a cookie-in-a-jar
-
-* Implement the receiving algorithm
-  * The rules don't need to see all the cookies at once, so just take one at a time
-
 * Implement send and sendHeaders
 
+* Detect attempts to set cookies on public domains
+  http://publicsuffix.org/list/
+
 * Use gnuidn to convert the binary data to text to provide IDNA compatibility
+
+* Write tests
 
