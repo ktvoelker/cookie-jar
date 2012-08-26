@@ -31,6 +31,25 @@ domainMatches bs ds
 isHostName :: Bytes -> Bool
 isHostName _ = True
 
+defaultPath :: Endpoint -> Bytes
+defaultPath Endpoint{..} = case BS.uncons epPath of
+  Just (0x2F, bs) ->
+    let pos = last $ BS.findIndices (== slash) epPath
+    in if pos == 0 then root else BS.take (BS.length epPath - pos) epPath
+  _ -> root
+  where
+    root = BS.pack [slash]
+
+pathMatches :: Bytes -> Bytes -> Bool
+pathMatches rp cp
+  | rp == cp = True
+  | pre && root `BS.isSuffixOf` cp = True
+  | pre && root `BS.isPrefixOf` BS.drop (BS.length cp) rp = True
+  | otherwise = False
+  where
+    pre = cp `BS.isPrefixOf` rp
+    root = BS.pack [slash]
+
 receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
 receive = undefined
 
