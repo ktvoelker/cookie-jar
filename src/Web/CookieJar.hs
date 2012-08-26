@@ -15,6 +15,21 @@ import Data.Maybe
 
 import Web.CookieJar.Types
 import Web.CookieJar.Parser
+import Web.CookieJar.Parser.Util
+
+domainMatches :: Bytes -> Bytes -> Bool
+domainMatches bs ds
+  | bs == ds
+    = True
+  | otherwise
+    = ds `BS.isSuffixOf` bs
+      && BS.pack [period] `BS.isSuffixOf` BS.take (BS.length bs - BS.length ds) bs
+      && isHostName bs
+
+-- TODO should be False when the string is an IP address
+-- TODO is there any way to do a positive test instead?
+isHostName :: Bytes -> Bool
+isHostName _ = True
 
 receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
 receive = undefined
