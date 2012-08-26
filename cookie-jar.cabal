@@ -19,7 +19,9 @@ Library
     base >= 3 && < 5,
     bytestring -any,
     http-types -any,
-    time -any
+    time -any,
+    text -any,
+    case-insensitive -any
   exposed-modules:
     Web.CookieJar
   hs-source-dirs: src
