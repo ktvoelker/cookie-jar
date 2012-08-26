@@ -5,6 +5,7 @@ module Web.CookieJar
   ) where
 
 import qualified Data.ByteString as BS
+import qualified Data.CaseInsensitive as CI
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as E
 
@@ -29,20 +30,22 @@ data Endpoint =
   , epPath   :: Bytes
   } deriving (Show)
 
+data SetCookiePath = DefaultPath | Path Bytes deriving (Show)
+
 data SetCookie =
   SetCookie
   { scName     :: Bytes
   , scValue    :: Bytes
   , scDomain   :: Maybe Bytes
-  , scPath     :: Maybe Bytes
-  , scSecure   :: Maybe Bool
-  , scHttpOnly :: Maybe Bool
+  , scPath     :: Maybe SetCookiePath
+  , scSecure   :: Bool
+  , scHttpOnly :: Bool
   , scExpires  :: Maybe Time
   , scMaxAge   :: Maybe Integer
-  }
+  } deriving (Show)
 
 emptySetCookie :: Bytes -> Bytes -> SetCookie
-emptySetCookie n v = SetCookie n v Nothing Nothing Nothing Nothing Nothing Nothing
+emptySetCookie n v = SetCookie n v Nothing Nothing False False Nothing Nothing
 
 semicolon :: Word8
 semicolon = 0x3B
@@ -50,21 +53,94 @@ semicolon = 0x3B
 equals :: Word8
 equals = 0x3D
 
+space :: Word8
+space = 0x20
+
+hTab :: Word8
+hTab = 0x09
+
+isWhitespace :: Word8 -> Bool
+isWhitespace w = w == space || w == hTab
+
+trim :: Bytes -> Bytes
+trim = let f = BS.reverse . BS.dropWhile isWhitespace in f . f
+
 parseSetCookie :: Bytes -> Maybe SetCookie
 parseSetCookie bs = do
   guard $ name /= BS.empty
-  (0x3D, value) <- BS.uncons valueWithEquals
+  (0x3D, rawValue) <- BS.uncons valueWithEquals
   attrs <- parseAttributes unparsedAttributes
-  return $ foldr ($) (emptySetCookie name value) attrs
+  return $ foldr ($) (emptySetCookie name (trim rawValue)) attrs
   where
     (nameValuePair, unparsedAttributes) = BS.span (/= semicolon) bs
-    (name, valueWithEquals) = BS.span (/= equals) nameValuePair
+    (rawName, valueWithEquals) = BS.span (/= equals) nameValuePair
+    name = trim rawName
 
 type Attribute = SetCookie -> SetCookie
 
--- TODO
 parseAttributes :: Bytes -> Maybe [Attribute]
-parseAttributes bs = undefined
+parseAttributes = mapM parseAttribute . BS.split semicolon . BS.drop 1
+
+parseAttribute :: Bytes -> Maybe Attribute
+parseAttribute bs = maybe (const $ Just id) id (lookup (CI.mk name) avParsers) value
+  where
+    (rawName, rawValue) = BS.span (/= equals) bs
+    name = trim rawName
+    value = trim rawValue
+
+avParsers :: [(CI.CI Bytes, Bytes -> Maybe Attribute)]
+avParsers =
+  [ ("Expires",  parseExpires)
+  , ("Max-Age",  parseMaxAge)
+  , ("Domain",   parseDomain)
+  , ("Path",     parsePath)
+  , ("Secure",   parseSecure)
+  , ("HttpOnly", parseHttpOnly)
+  ]
+
+parseSecure :: Bytes -> Maybe Attribute
+parseSecure = const $ Just $ \sc -> sc { scSecure = True }
+
+parseHttpOnly :: Bytes -> Maybe Attribute
+parseHttpOnly = const $ Just $ \sc -> sc { scHttpOnly = True }
+
+slash :: Word8
+slash = 0x2F
+
+parsePath :: Bytes -> Maybe Attribute
+parsePath bs
+  | bs == BS.empty = f DefaultPath
+  | BS.head bs /= slash = f DefaultPath
+  | otherwise = f $ Path bs
+  where
+    f p = Just $ \sc -> sc { scPath = Just p }
+
+period :: Word8
+period = 0x2E
+
+parseDomain :: Bytes -> Maybe Attribute
+parseDomain bs
+  | bs == BS.empty = Just id
+  | Just (0x2E, ds) <- BS.uncons bs = f ds
+  | otherwise = f bs
+  where
+    f bs = Just $ \sc -> sc { scDomain = Just $ bytesToLower bs }
+
+parseExpires :: Bytes -> Maybe Attribute
+parseExpires =
+  maybe (Just id) (\d -> Just $ \sc -> sc { scExpires = Just d })
+  . parseDate
+
+negative :: Word8
+negative = 0x2D
+
+parseMaxAge :: Bytes -> Maybe Attribute
+parseMaxAge bs
+  | bs == BS.empty = Just id
+  | Just (0x2D, ds) <- BS.uncons bs = f ds
+  | otherwise = f bs
+  where
+    f ds = Just $ \sc -> sc { scMaxAge = digitsValue $ BS.unpack ds }
 
 isDateDelim :: Word8 -> Bool
 isDateDelim w =
@@ -87,6 +163,9 @@ isDateNonDelim w =
   || w >= 0x41 && w <= 0x5A -- uppercase ALPHA
   || w >= 0x61 && w <= 0x7A -- lowercase ALPHA
   || w >= 0x7F && w <= 0xFF
+
+bytesToLower :: Bytes -> Bytes
+bytesToLower = BS.map $ \w -> if w >= 0x41 && w <= 0x5A then w + 0x20 else w
 
 -- TODO swap the details into isDigit?
 isNonDigit :: Word8 -> Bool
@@ -112,14 +191,14 @@ data DateFields =
   , dfYear       :: Maybe Int
   } deriving (Show)
 
-digitValue :: Word8 -> Maybe Int
+digitValue :: (Integral a) => Word8 -> Maybe a
 digitValue w
   | w >= 0x30 && w <= 0x39
     = Just $ fromIntegral $ w - 0x30
   | otherwise
     = Nothing
 
-digitsValue :: [Word8] -> Maybe Int
+digitsValue :: (Integral a) => [Word8] -> Maybe a
 digitsValue = f . reverse . map digitValue
   where
     f (Nothing : _) = Nothing

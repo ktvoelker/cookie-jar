@@ -2,8 +2,6 @@
 To-Do
 =====
 
-* Implement parseAttributes
-
 * Implement the domain-match algorithm
 
 * Implement the path-match algorithm
