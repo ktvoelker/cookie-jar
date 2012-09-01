@@ -2,11 +2,9 @@
 To-Do
 =====
 
-* Handle the case of an incoming cookie that expires in the past
+* Implement sendNoExpire
 
-* Implement normal expiration
-
-* Implement send and sendHeaders
+* Implement makeHeaderValue
 
 * Detect attempts to set cookies on public domains
   http://publicsuffix.org/list/

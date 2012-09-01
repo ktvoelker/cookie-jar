@@ -58,9 +58,14 @@ pathMatches rp cp
 endSession :: Jar -> Jar
 endSession = Jar . filter (not . cPersist) . getCookies
 
+expire :: Time -> Jar -> Jar
+expire now = Jar . filter ((== Just False) . fmap (< now) . cExpires) . getCookies
+
 receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
-receive now ep@Endpoint{..} SetCookie{..} jar = if abort then jar else Jar $
-  Cookie
+receive now ep@Endpoint{..} SetCookie{..} jar =
+  expire now
+  $ if abort then jar else Jar
+  $ Cookie
   { cName     = scName
   , cValue    = scValue
   , cCreation = maybe now id $ fmap cCreation same
@@ -91,8 +96,17 @@ receive now ep@Endpoint{..} SetCookie{..} jar = if abort then jar else Jar $
       Just DefaultPath -> defaultPath ep
       Just (Path p) -> p
 
+sendNoExpire :: Jar -> Endpoint -> [Cookie]
+-- TODO
+sendNoExpire jar Endpoint{..} = undefined
+
 send :: Time -> Jar -> Endpoint -> [Cookie]
-send = undefined
+send now jar = fst . send' now jar
+
+send' :: Time -> Jar -> Endpoint -> ([Cookie], Jar)
+send' now jar ep = (sendNoExpire jar' ep, jar')
+  where
+    jar' = expire now jar
 
 receiveHeaders :: Time -> Endpoint -> ResponseHeaders -> Jar -> Jar
 receiveHeaders time host =
@@ -101,6 +115,15 @@ receiveHeaders time host =
   . map (parseSetCookie . snd)
   . filter ((== "Set-Cookie") . fst)
 
+makeHeaderValue :: Cookie -> Bytes
+-- TODO
+makeHeaderValue = undefined
+
 sendHeaders :: Time -> Jar -> Endpoint -> RequestHeaders
-sendHeaders = undefined
+sendHeaders now jar = fst . sendHeaders' now jar
+
+sendHeaders' :: Time -> Jar -> Endpoint -> (RequestHeaders, Jar)
+sendHeaders' now jar ep = (map (("Cookie",) . makeHeaderValue) cs, jar')
+  where
+    (cs, jar') = send' now jar ep
 
