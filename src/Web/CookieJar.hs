@@ -1,6 +1,11 @@
 
 module Web.CookieJar
   ( Jar()
+  , Cookie(..)
+  , SetCookie(..)
+  , SetCookiePath(..)
+  , emptySetCookie
+  , Endpoint(..)
   , receive
   , send
   , receiveHeaders
@@ -96,8 +101,11 @@ receive now ep@Endpoint{..} SetCookie{..} jar =
       Just DefaultPath -> defaultPath ep
       Just (Path p) -> p
 
-sendNoExpire :: Jar -> Endpoint -> [Cookie]
-sendNoExpire jar ep = sortBy headerOrder $ filter (shouldSend ep) $ getCookies jar
+sendNoExpire :: Time -> Jar -> Endpoint -> ([Cookie], Jar)
+sendNoExpire now jar ep = (sortBy headerOrder send', Jar $ send' ++ noSend)
+  where
+    (send, noSend) = partition (shouldSend ep) $ getCookies jar
+    send' = map (\c -> c { cAccess = now }) send
 
 headerOrder :: Cookie -> Cookie -> Ordering
 headerOrder a b = let f = BS.length . cPath in case compare (f b) (f a) of
@@ -115,13 +123,8 @@ shouldSend Endpoint{..} Cookie{..} =
       cHostOnly && epDomain == cDomain
       || not cHostOnly && epDomain `domainMatches` cDomain
 
-send :: Time -> Jar -> Endpoint -> [Cookie]
-send now jar = fst . send' now jar
-
-send' :: Time -> Jar -> Endpoint -> ([Cookie], Jar)
-send' now jar ep = (sendNoExpire jar' ep, jar')
-  where
-    jar' = expire now jar
+send :: Time -> Jar -> Endpoint -> ([Cookie], Jar)
+send now = sendNoExpire now . expire now
 
 receiveHeaders :: Time -> Endpoint -> ResponseHeaders -> Jar -> Jar
 receiveHeaders time host =
@@ -133,15 +136,12 @@ receiveHeaders time host =
 makeHeaderValue :: Cookie -> Bytes
 makeHeaderValue Cookie{..} = cName `BS.append` BS.cons equals cValue
 
-sendHeaders :: Time -> Jar -> Endpoint -> RequestHeaders
-sendHeaders now jar = fst . sendHeaders' now jar
-
-sendHeaders' :: Time -> Jar -> Endpoint -> (RequestHeaders, Jar)
-sendHeaders' now jar ep = (map ("Cookie",) bs, jar')
+sendHeaders :: Time -> Jar -> Endpoint -> (RequestHeaders, Jar)
+sendHeaders now jar ep = (map ("Cookie",) bs, jar')
   where
     bs = case map makeHeaderValue cs of
       [] -> []
       (b : bs) -> [BS.concat $ b : concatMap ((sep :) . (: [])) bs]
     sep = BS.pack [semicolon, space]
-    (cs, jar') = send' now jar ep
+    (cs, jar') = send now jar ep
 
