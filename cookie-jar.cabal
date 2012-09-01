@@ -22,7 +22,8 @@ Library
     time -any,
     text -any,
     case-insensitive -any,
-    split -any
+    split -any,
+    gnuidn -any
   exposed-modules:
     Network.DNS.Public
     Web.CookieJar

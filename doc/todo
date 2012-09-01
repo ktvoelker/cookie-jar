@@ -4,6 +4,7 @@ To-Do
 
 * Detect attempts to set cookies on public domains
   http://publicsuffix.org/list/
+  * Supply the public suffix data file when making the Jar
 
 * Use gnuidn to convert the binary data to text to provide IDNA compatibility
 
