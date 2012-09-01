@@ -1,11 +1,11 @@
 
 module Web.CookieJar
   ( Jar()
-  , endpoint
   , receive
   , send
   , receiveHeaders
   , sendHeaders
+  , endSession
   ) where
 
 import qualified Data.ByteString as BS
@@ -19,17 +19,17 @@ import Web.CookieJar.Types
 import Web.CookieJar.Parser
 import Web.CookieJar.Parser.Util
 
-endpoint :: Bytes -> Bytes -> Bool -> Bool -> Endpoint
-endpoint = Endpoint . bytesToLower
-
-domainMatches :: Bytes -> Bytes -> Bool
+domainMatches :: CI Bytes -> CI Bytes -> Bool
 domainMatches bs ds
   | bs == ds
     = True
   | otherwise
-    = ds `BS.isSuffixOf` bs
-      && BS.pack [period] `BS.isSuffixOf` BS.take (BS.length bs - BS.length ds) bs
-      && isHostName bs
+    = ds' `BS.isSuffixOf` bs'
+      && BS.pack [period] `BS.isSuffixOf` BS.take (BS.length bs' - BS.length ds') bs'
+      && isHostName bs'
+  where
+    bs' = foldedCase bs
+    ds' = foldedCase ds
 
 -- TODO should be False when the string is an IP address
 -- TODO is there any way to do a positive test instead?
@@ -54,6 +54,9 @@ pathMatches rp cp
   where
     pre = cp `BS.isPrefixOf` rp
     root = BS.pack [slash]
+
+endSession :: Jar -> Jar
+endSession = Jar . filter (not . cPersist) . getCookies
 
 receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
 receive now ep@Endpoint{..} SetCookie{..} jar = if abort then jar else Jar $

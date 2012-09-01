@@ -35,9 +35,6 @@ isWhitespace w = w == space || w == hTab
 trim :: Bytes -> Bytes
 trim = let f = BS.reverse . BS.dropWhile isWhitespace in f . f
 
-bytesToLower :: Bytes -> Bytes
-bytesToLower = BS.map $ \w -> if w >= 0x41 && w <= 0x5A then w + 0x20 else w
-
 -- TODO swap the details into isDigit?
 isNonDigit :: Word8 -> Bool
 isNonDigit w =

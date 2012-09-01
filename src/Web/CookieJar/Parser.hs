@@ -63,7 +63,7 @@ parseDomain bs
   | Just (0x2E, ds) <- BS.uncons bs = f ds
   | otherwise = f bs
   where
-    f bs = Just $ \sc -> sc { scDomain = Just $ bytesToLower bs }
+    f bs = Just $ \sc -> sc { scDomain = Just $ mk bs }
 
 parseExpires :: Bytes -> Maybe Attribute
 parseExpires =
