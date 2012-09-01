@@ -105,7 +105,15 @@ headerOrder a b = let f = BS.length . cPath in case compare (f b) (f a) of
   o -> o
 
 shouldSend :: Endpoint -> Cookie -> Bool
-shouldSend Endpoint{..} Cookie{..} = undefined
+shouldSend Endpoint{..} Cookie{..} =
+  hostOk
+  && epPath `pathMatches` cPath
+  && (not cSecure || epSecure)
+  && (not cHttpOnly || epHttp)
+  where
+    hostOk =
+      cHostOnly && epDomain == cDomain
+      || not cHostOnly && epDomain `domainMatches` cDomain
 
 send :: Time -> Jar -> Endpoint -> [Cookie]
 send now jar = fst . send' now jar
