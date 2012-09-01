@@ -89,6 +89,7 @@ input :: BS.ByteString -> [BS.ByteString]
 input = reverse . BS.split period . BS.map byteToLower
 
 output :: [BS.ByteString] -> BS.ByteString
+output [] = BS.empty
 output (x : xs) = BS.concat $ x : concatMap ((BS.pack [period] :) . (: [])) xs
 
 splitDomain :: Rules -> BS.ByteString -> (BS.ByteString, BS.ByteString)
@@ -101,7 +102,9 @@ splitDomain (getRules -> rs) (input -> ds) =
     g (a, b) = (output a, output b)
 
 match :: [BS.ByteString] -> [Label] -> Bool
+match _ (Error str : _) = error str
 match [] _ = True
+match _ [] = True
 match (d : ds) (Label r : rs)
   | d == r = match ds rs
   | d /= r = False
