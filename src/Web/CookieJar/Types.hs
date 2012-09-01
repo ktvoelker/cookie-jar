@@ -36,6 +36,8 @@ data Endpoint =
   Endpoint
   { epDomain :: Bytes
   , epPath   :: Bytes
+  , epHttp   :: Bool
+  , epSecure :: Bool
   } deriving (Show)
 
 data SetCookiePath = DefaultPath | Path Bytes deriving (Show)

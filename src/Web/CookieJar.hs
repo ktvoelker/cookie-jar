@@ -11,6 +11,7 @@ module Web.CookieJar
 import qualified Data.ByteString as BS
 
 import Control.Monad
+import Data.List
 import Data.Maybe
 import Data.Time
 
@@ -18,8 +19,8 @@ import Web.CookieJar.Types
 import Web.CookieJar.Parser
 import Web.CookieJar.Parser.Util
 
-endpoint :: Bytes -> Bytes -> Endpoint
-endpoint d p = Endpoint (bytesToLower d) p
+endpoint :: Bytes -> Bytes -> Bool -> Bool -> Endpoint
+endpoint = Endpoint . bytesToLower
 
 domainMatches :: Bytes -> Bytes -> Bool
 domainMatches bs ds
@@ -59,22 +60,30 @@ receive now ep@Endpoint{..} SetCookie{..} jar = if abort then jar else Jar $
   Cookie
   { cName     = scName
   , cValue    = scValue
-  , cCreation = now
+  , cCreation = maybe now id $ fmap cCreation same
   , cAccess   = now
   , cExpires  = exp
   , cPersist  = maybe False (const True) exp
-  , cDomain   = scDomain `mplus` Just epDomain
+  , cDomain   = domain
   , cHostOnly = dMat == Nothing
-  , cPath     = Just path
+  , cPath     = path
   , cSecure   = scSecure
   , cHttpOnly = scHttpOnly
-  } : getCookies jar
+  } : cs
   where
-    exp   = fmap (flip addUTCTime now . fromIntegral) scMaxAge `mplus` scExpires
-    dMat  = fmap (epDomain `domainMatches`) scDomain
+    (sames, cs) = 
+      partition (\Cookie{..} -> (cName, cDomain, cPath) == (scName, domain, path))
+      $ getCookies jar
+    same = listToMaybe $ take 1 sames
+    exp = fmap (flip addUTCTime now . fromIntegral) scMaxAge `mplus` scExpires
+    dMat = fmap (epDomain `domainMatches`) scDomain
     -- TODO check for public suffixes and abort as needed
-    abort = dMat == Just False
-    path  = case scPath of
+    abort = 
+      dMat == Just False
+      || scHttpOnly && not epHttp
+      || fmap cHttpOnly same == Just True && not epHttp
+    domain = scDomain `mplus` Just epDomain
+    path = Just $ case scPath of
       Nothing -> defaultPath ep
       Just DefaultPath -> defaultPath ep
       Just (Path p) -> p

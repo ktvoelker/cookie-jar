@@ -9,5 +9,8 @@ To-Do
 
 * Use gnuidn to convert the binary data to text to provide IDNA compatibility
 
+* Implement configurable storage size limits and the eviction rules from RFC-6265
+  * Also provide a function to "end the current session"
+
 * Write tests
 
