@@ -4,8 +4,6 @@ To-Do
 
 * Implement sendNoExpire
 
-* Implement makeHeaderValue
-
 * Detect attempts to set cookies on public domains
   http://publicsuffix.org/list/
 

@@ -116,14 +116,17 @@ receiveHeaders time host =
   . filter ((== "Set-Cookie") . fst)
 
 makeHeaderValue :: Cookie -> Bytes
--- TODO
-makeHeaderValue = undefined
+makeHeaderValue Cookie{..} = cName `BS.append` BS.cons equals cValue
 
 sendHeaders :: Time -> Jar -> Endpoint -> RequestHeaders
 sendHeaders now jar = fst . sendHeaders' now jar
 
 sendHeaders' :: Time -> Jar -> Endpoint -> (RequestHeaders, Jar)
-sendHeaders' now jar ep = (map (("Cookie",) . makeHeaderValue) cs, jar')
+sendHeaders' now jar ep = (map ("Cookie",) bs, jar')
   where
+    bs = case map makeHeaderValue cs of
+      [] -> []
+      (b : bs) -> [BS.concat $ b : concatMap ((sep :) . (: [])) bs]
+    sep = BS.pack [semicolon, space]
     (cs, jar') = send' now jar ep
 
