@@ -22,8 +22,8 @@ data Cookie =
   { cName     :: Bytes
   , cValue    :: Bytes
   , cExpires  :: Maybe Time
-  , cDomain   :: Maybe (CI Bytes)
-  , cPath     :: Maybe Bytes
+  , cDomain   :: CI Bytes
+  , cPath     :: Bytes
   , cCreation :: Time
   , cAccess   :: Time
   , cPersist  :: Bool

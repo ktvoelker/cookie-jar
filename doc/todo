@@ -4,6 +4,10 @@ To-Do
 
 * Implement sendNoExpire
 
+* Implement correct handling of the last-access field of cookies
+  * This requires eliminating the sending interfaces that don't return a new Jar
+  * Also, sendNoExpire will need to be able to update the Jar
+
 * Detect attempts to set cookies on public domains
   http://publicsuffix.org/list/
 

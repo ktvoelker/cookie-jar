@@ -90,15 +90,22 @@ receive now ep@Endpoint{..} SetCookie{..} jar =
       dMat == Just False
       || scHttpOnly && not epHttp
       || fmap cHttpOnly same == Just True && not epHttp
-    domain = scDomain `mplus` Just epDomain
-    path = Just $ case scPath of
+    domain = maybe epDomain id scDomain
+    path = case scPath of
       Nothing -> defaultPath ep
       Just DefaultPath -> defaultPath ep
       Just (Path p) -> p
 
 sendNoExpire :: Jar -> Endpoint -> [Cookie]
--- TODO
-sendNoExpire jar Endpoint{..} = undefined
+sendNoExpire jar ep = sortBy headerOrder $ filter (shouldSend ep) $ getCookies jar
+
+headerOrder :: Cookie -> Cookie -> Ordering
+headerOrder a b = let f = BS.length . cPath in case compare (f b) (f a) of
+  EQ -> compare (cCreation a) (cCreation b)
+  o -> o
+
+shouldSend :: Endpoint -> Cookie -> Bool
+shouldSend Endpoint{..} Cookie{..} = undefined
 
 send :: Time -> Jar -> Endpoint -> [Cookie]
 send now jar = fst . send' now jar
