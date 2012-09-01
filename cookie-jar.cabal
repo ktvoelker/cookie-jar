@@ -21,8 +21,10 @@ Library
     http-types -any,
     time -any,
     text -any,
-    case-insensitive -any
+    case-insensitive -any,
+    split -any
   exposed-modules:
+    Network.DNS.Public
     Web.CookieJar
   other-modules:
     Web.CookieJar.Parser
