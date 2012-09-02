@@ -1,5 +1,5 @@
 
-.PHONY: all configure build install clean doc
+.PHONY: all configure build test install clean doc
 
 all: build
 
@@ -11,10 +11,13 @@ install: build
 	cabal-dev install
 
 configure:
-	cabal-dev configure
+	cabal-dev configure --enable-tests
 
 build: configure
 	cabal-dev build
+
+test: build
+	cabal-dev test
 
 clean:
 	cabal-dev clean

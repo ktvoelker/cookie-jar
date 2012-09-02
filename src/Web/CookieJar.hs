@@ -1,6 +1,7 @@
 
 module Web.CookieJar
   ( Jar()
+  , emptyJar
   , Cookie(..)
   , SetCookie(..)
   , SetCookiePath(..)
