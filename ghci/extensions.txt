@@ -1,3 +1,10 @@
+DataKinds
+KindSignatures
+TypeFamilies
+MultiParamTypeClasses
+FlexibleInstances
+FlexibleContexts
+StandaloneDeriving
 OverloadedStrings
 RecordWildCards
 ScopedTypeVariables

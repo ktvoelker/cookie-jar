@@ -1,5 +1,17 @@
 
-module Network.DNS.Public.Types where
+module Network.DNS.Public.Types
+  ( Domain()
+  , makeDomain
+  , makePattern
+  , makeTextDomain
+  , makeTextPattern
+  , makeStringDomain
+  , makeStringPattern
+  , showDomain
+  , isSuffixOf
+  , countLabels
+  , dropSubdomains
+  ) where
 
 import qualified Data.ByteString as BS
 import qualified Data.Text as T
@@ -7,6 +19,21 @@ import qualified Data.Text.IDN.IDNA as IDNA
 
 import Control.Monad
 import Data.Word (Word8)
+
+capitalA :: Word8
+capitalA = 65
+
+capitalZ :: Word8
+capitalZ = 90
+
+lowercaseA :: Word8
+lowercaseA = 97
+
+lowerDiff :: Word8
+lowerDiff = lowercaseA - capitalA
+
+byteToLower :: Word8 -> Word8
+byteToLower n = if n >= capitalA && n <= capitalZ then n + lowerDiff else n
 
 type family Label (a :: Bool) :: *
 
@@ -23,13 +50,18 @@ instance Unify (Maybe BS.ByteString) BS.ByteString where
 
 instance Unify BS.ByteString (Maybe BS.ByteString) where
   unify a b = unify b a
-  --unify _ Nothing = True
-  --unify a (Just b) = a == b
 
 instance Unify BS.ByteString BS.ByteString where
   unify a b = a == b
 
 newtype Domain (a :: Bool) = Domain { getLabels :: [Label a] }
+
+instance Eq (Domain False) where
+  (Domain as) == (Domain bs) = as == bs
+
+deriving instance Show (Domain True)
+
+deriving instance Show (Domain False)
 
 period :: Word8
 period = 46
@@ -38,7 +70,7 @@ star :: BS.ByteString
 star = BS.pack [42]
 
 split :: BS.ByteString -> [BS.ByteString]
-split = dropWhile BS.null . BS.split period
+split = reverse . BS.split period . BS.map byteToLower . BS.dropWhile (== period)
 
 makeDomain :: BS.ByteString -> Maybe (Domain False)
 makeDomain bs = case split bs of
@@ -55,7 +87,7 @@ makePattern bs = case split bs of
       | otherwise = Just x
 
 fromText :: T.Text -> Maybe BS.ByteString
-fromText t = case IDNA.toASCII IDNA.defaultFlags t of
+fromText t = case IDNA.toASCII IDNA.defaultFlags $ T.dropWhile (== '.') t of
   Left _ -> Nothing
   Right bs -> Just bs
 
@@ -74,7 +106,7 @@ makeStringDomain = makeDomain <=< fromString
 makeStringPattern :: String -> Maybe (Domain True)
 makeStringPattern = makePattern <=< fromString
 
-isSuffixOf :: (Unify (Label a) (Label b)) => Domain a -> Domain b -> Bool
+isSuffixOf :: (Unify (Label a) BS.ByteString) => Domain a -> Domain False -> Bool
 isSuffixOf (Domain as) (Domain bs) = f as bs
   where
     f [] _ = True
@@ -82,4 +114,13 @@ isSuffixOf (Domain as) (Domain bs) = f as bs
     f (a : as) (b : bs)
       | unify a b = f as bs
       | otherwise = False
+
+countLabels :: Domain a -> Int
+countLabels = length . getLabels
+
+showDomain :: Domain False -> BS.ByteString
+showDomain (Domain xs) = BS.drop 1 . BS.concat . map (BS.cons period) . reverse $ xs
+
+dropSubdomains :: Int -> Domain a -> Domain a
+dropSubdomains n (Domain as) = Domain $ take (length as - n) as
 

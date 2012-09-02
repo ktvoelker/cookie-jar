@@ -42,6 +42,7 @@ Library
     MultiParamTypeClasses
     FlexibleInstances
     FlexibleContexts
+    StandaloneDeriving
     OverloadedStrings
     RecordWildCards
     ScopedTypeVariables

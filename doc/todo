@@ -3,12 +3,11 @@ To-Do
 =====
 
 * Detect attempts to set cookies on public domains
-  http://publicsuffix.org/list/
-  * Supply the public suffix data file when making the Jar
 
 * Use gnuidn to convert the binary data to text to provide IDNA compatibility
 
 * Implement configurable storage size limits and the eviction rules from RFC-6265
 
 * Write tests
+  * Incorporate the existing public domain test program
 
