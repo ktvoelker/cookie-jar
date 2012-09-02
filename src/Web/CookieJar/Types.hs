@@ -8,10 +8,12 @@ module Web.CookieJar.Types
 
 import qualified Data.ByteString as BS
 
-import Data.CaseInsensitive (CI(), foldedCase, mk)
+import Data.CaseInsensitive (CI(), foldedCase, mk, original)
 import Data.Time
 import Data.Word (Word8)
 import Network.HTTP.Types
+
+import qualified Network.DNS.Public as P
 
 type Time = UTCTime
 
@@ -32,7 +34,17 @@ data Cookie =
   , cHttpOnly :: Bool
   } deriving (Show)
 
-newtype Jar = Jar { getCookies :: [Cookie] }
+data Jar =
+  Jar
+  { jarRules   :: P.Rules
+  , jarCookies :: [Cookie]
+  } deriving (Show)
+
+emptyJar :: Maybe P.Rules -> Jar
+emptyJar = flip Jar [] . maybe (P.parseRules "") id
+
+modifyCookies :: ([Cookie] -> [Cookie]) -> Jar -> Jar
+modifyCookies f jar = jar { jarCookies = f $ jarCookies jar }
 
 data Endpoint =
   Endpoint

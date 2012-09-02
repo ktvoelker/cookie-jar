@@ -16,9 +16,12 @@ module Web.CookieJar
 import qualified Data.ByteString as BS
 
 import Control.Monad
+import Data.Functor
 import Data.List
 import Data.Maybe
 import Data.Time
+
+import qualified Network.DNS.Public as P
 
 import Web.CookieJar.Types
 import Web.CookieJar.Parser
@@ -61,15 +64,15 @@ pathMatches rp cp
     root = BS.pack [slash]
 
 endSession :: Jar -> Jar
-endSession = Jar . filter (not . cPersist) . getCookies
+endSession = modifyCookies $ filter (not . cPersist)
 
 expire :: Time -> Jar -> Jar
-expire now = Jar . filter ((== Just False) . fmap (< now) . cExpires) . getCookies
+expire now = modifyCookies $ filter ((== Just False) . fmap (< now) . cExpires)
 
 receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
 receive now ep@Endpoint{..} SetCookie{..} jar =
   expire now
-  $ if abort then jar else Jar
+  $ if abort then jar else Jar (jarRules jar)
   $ Cookie
   { cName     = scName
   , cValue    = scValue
@@ -86,25 +89,31 @@ receive now ep@Endpoint{..} SetCookie{..} jar =
   where
     (sames, cs) = 
       partition (\Cookie{..} -> (cName, cDomain, cPath) == (scName, domain, path))
-      $ getCookies jar
+      $ jarCookies jar
     same = listToMaybe $ take 1 sames
     exp = fmap (flip addUTCTime now . fromIntegral) scMaxAge `mplus` scExpires
-    dMat = fmap (epDomain `domainMatches`) scDomain
-    -- TODO check for public suffixes and abort as needed
+    public =
+      let d = fmap original scDomain >>= P.makeDomain
+      in isJust d && fmap (P.publicSuffix $ jarRules jar) d == d
+    exactDomain = scDomain == Just epDomain
+    scDomain' = if public && exactDomain then Nothing else scDomain
+    dMat = fmap (epDomain `domainMatches`) scDomain'
     abort = 
       dMat == Just False
       || scHttpOnly && not epHttp
       || fmap cHttpOnly same == Just True && not epHttp
-    domain = maybe epDomain id scDomain
+      || public && not exactDomain
+    domain = maybe epDomain id scDomain'
     path = case scPath of
       Nothing -> defaultPath ep
       Just DefaultPath -> defaultPath ep
       Just (Path p) -> p
 
 sendNoExpire :: Time -> Jar -> Endpoint -> ([Cookie], Jar)
-sendNoExpire now jar ep = (sortBy headerOrder send', Jar $ send' ++ noSend)
+sendNoExpire now jar ep =
+  (sortBy headerOrder send', Jar (jarRules jar) $ send' ++ noSend)
   where
-    (send, noSend) = partition (shouldSend ep) $ getCookies jar
+    (send, noSend) = partition (shouldSend ep) $ jarCookies jar
     send' = map (\c -> c { cAccess = now }) send
 
 headerOrder :: Cookie -> Cookie -> Ordering

@@ -2,8 +2,6 @@
 To-Do
 =====
 
-* Detect attempts to set cookies on public domains
-
 * Use gnuidn to convert the binary data to text to provide IDNA compatibility
 
 * Implement configurable storage size limits and the eviction rules from RFC-6265
