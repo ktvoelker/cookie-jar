@@ -2,27 +2,24 @@
 module Main where
 
 import Control.Monad
-import Control.Monad.State
-import System.Exit
+import Data.Array
 import Test.HUnit
+import System.Exit
 
 import qualified Network.DNS.Public as P
-import Web.CookieJar
 
 import Public
+import Util
 
-type Session a = StateT Jar IO a
+empty = sessionTest "Empty" $ return ()
 
-runSession :: P.Rules -> Session a -> IO a
-runSession = flip evalStateT . emptyJar . Just
-
-sessionTest :: String -> Session () -> P.Rules -> Test
-sessionTest n s r = TestLabel n $ TestCase $ runSession r s
-
-emptyTest = sessionTest "Empty test" $ return ()
+simple = sessionTest "Simple key/value pair" $ do
+  recv (time ! 0) (ep host1 path1 True True) "x=y"
+  send (time ! 1) (ep host1 path1 True True) "x=y"
 
 sessionTests rules = map ($ rules)
-  [ emptyTest
+  [ empty
+  , simple
   ]
 
 main = do

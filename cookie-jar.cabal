@@ -64,7 +64,8 @@ Test-Suite cookie-jar-tests
     split -any,
     gnuidn -any,
     HUnit -any,
-    mtl -any
+    mtl -any,
+    array -any
   default-extensions:
     DataKinds
     KindSignatures
