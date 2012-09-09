@@ -3,9 +3,8 @@ To-Do
 =====
 
 * Write more tests
-  * The "persistent" flag
-  * Public suffixes
   * Secure and HttpOnly
+  * Public suffixes
   * The sorting of multiple cookies in a request
 
 * Add another parser for Set-Cookie headers which only accepts cookies that meet the

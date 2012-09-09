@@ -65,7 +65,7 @@ pathMatches rp cp
     root = BS.pack [slash]
 
 endSession :: Jar -> Jar
-endSession = modifyCookies $ filter (not . cPersist)
+endSession = modifyCookies $ filter cPersist
 
 expire :: Time -> Jar -> Jar
 expire now = modifyCookies . filter $ not . (== Just True) . fmap (<= now) . cExpires
