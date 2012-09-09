@@ -3,7 +3,7 @@ module Domain (domainTests) where
 
 import Util
 
-domainTests = [test0, test1, test2, test3, test4]
+domainTests = [test0, test1, test2, test3, test4, test5, test6]
 
 test0 = sessionTest "Host-only cookie" $ do
   recv (time 0) (ep host1 path1 True True) "w=x"
@@ -34,4 +34,14 @@ test4 = sessionTest "Explicit domain on parent (leading dot)" $ do
   send (time 0) (ep host1 path1 True True) "a=b"
   send (time 0) (ep host1a path1 True True) "a=b"
   send (time 0) (ep host1b path1 True True) "a=b"
+
+test5 = sessionTest "Explicit domain on public suffix" $ do
+  recv (time 0) (ep host1 path1 True True) "a=b; domain=example"
+  noSend (time 0) (ep host1 path1 True True)
+
+test6 = sessionTest "Explicit domain on public suffix identical to host" $ do
+  recv (time 0) (ep pubHost path1 True True) "a=b; domain=example"
+  send (time 1) (ep pubHost path1 True True) "a=b"
+  noSend (time 1) (ep host1 path1 True True)
+  noSend (time 1) (ep host2 path1 True True)
 
