@@ -12,6 +12,7 @@ import Data.CaseInsensitive (CI)
 import Data.Time
 import Data.Time.Clock.POSIX
 import System.Exit
+import System.IO (hPutStr, hPutStrLn, stderr)
 import Test.HUnit
 
 import qualified Network.DNS.Public as P
@@ -23,13 +24,14 @@ import Public
 time :: Int -> UTCTime
 time = posixSecondsToUTCTime . fromIntegral
 
-second, minute, hour, day, week, year :: Int
+second, minute, hour, day, week, year, year2000 :: Int
 second = 1
 minute = 60
 hour = 60 * minute
 day = 24 * hour
 week = 7 * day
 year = 365 * day
+year2000 = 946684800
 
 host1, host2 :: CI Bytes
 host1 = "host1.example"
@@ -58,14 +60,18 @@ runSession = flip evalStateT . emptyJar . Just
 sessionTest :: String -> Session () -> P.Rules -> Test
 sessionTest n s r = TestLabel n $ TestCase $ runSession r s
 
+debug = hPutStr stderr
+
+debugLn = hPutStrLn stderr
+
 dump :: (MonadState Jar m, MonadIO m) => m ()
-dump = get >>= liftIO . print . jarCookies
+dump = get >>= liftIO . debugLn . show . jarCookies
 
 recv :: Time -> Endpoint -> String -> Session ()
 recv now ep str = do
     liftIO $ do
-      putStr "recv "
-      putStrLn str
+      debug "recv "
+      debugLn str
     ( modify
       . receiveHeaders now ep
       . (: []) . ("Set-Cookie",)
@@ -77,8 +83,8 @@ recv now ep str = do
 send :: Time -> Endpoint -> String -> Session ()
 send now ep expect = do
   liftIO $ do
-    putStr "send "
-    putStrLn expect
+    debug "send "
+    debugLn expect
   jar <- get
   let (hs, jar') = sendHeaders now jar ep
   liftIO $ case hs of
@@ -90,8 +96,7 @@ send now ep expect = do
 
 noSend :: Time -> Endpoint -> Session ()
 noSend now ep = do
-  liftIO $ do
-    putStr "noSend"
+  liftIO $ debugLn "noSend"
   jar <- get
   let (hs, jar') = sendHeaders now jar ep
   liftIO $ assertEqual "Cookies sent" [] hs

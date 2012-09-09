@@ -54,7 +54,7 @@ sessionTests rules = map ($ rules)
   -- months
   , timeParseTest (31 * day) "1970 Feb 01 00:00:00"
   , timeParseTest ((31 + 28) * day) "1970 Mar 01 00:00:00"
-  , timeParseTest (year - (31 * day)) "1970 Dec 01 00:00:00"
+  , timeParseTest (year - 31 * day) "1970 Dec 01 00:00:00"
   -- days of the month
   , timeParseTest day "1970 Jan 02 00:00:00"
   , timeParseTest (2 * day) "1970 Jan 03 00:00:00"
@@ -70,6 +70,14 @@ sessionTests rules = map ($ rules)
   , timeParseTest second "1970 Jan 01 00:00:01"
   , timeParseTest (2 * second) "1970 Jan 01 00:00:02"
   , timeParseTest (minute - second) "1970 Jan 01 00:00:59"
+  -- recent years
+  , timeParseTest year2000 "Jan 01, 00 00:00:00"
+  , timeParseTest (year2000 - second) "Dec 31, 99 23:59:59"
+  , timeParseTest (year2000 + second) "Jan 01, 00 00:00:01"
+  -- leap years
+  , timeParseTest (year2000 + year + day) "Jan 01, 01 00:00:00"
+  , timeParseTest (year2000 - 3 * year) "Jan 01, 97 00:00:00"
+  , timeParseTest (year2000 - 4 * year - day) "Jan 01, 96 00:00:00"
   ]
 
 main = do
