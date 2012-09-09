@@ -20,13 +20,16 @@ import Web.CookieJar.Types
 
 import Public
 
-timeBounds :: (Int, Int)
-timeBounds = (0, 60 * 60 * 24 * 8)
+time :: Int -> UTCTime
+time = posixSecondsToUTCTime . fromIntegral
 
-time :: Array Int UTCTime
-time =
-  listArray timeBounds
-  $ map (posixSecondsToUTCTime . fromIntegral) [fst timeBounds .. snd timeBounds]
+second, minute, hour, day, week, year :: Int
+second = 1
+minute = 60
+hour = 60 * minute
+day = 24 * hour
+week = 7 * day
+year = 365 * day
 
 host1, host2 :: CI Bytes
 host1 = "host1.example"
