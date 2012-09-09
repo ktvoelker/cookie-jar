@@ -15,12 +15,14 @@ import Simple
 import Domain
 import Expires
 import MaxAge
+import Path
 
 sessionTests rules = map ($ rules)
   $  simpleTests
   ++ domainTests
   ++ expiresTests
   ++ maxAgeTests
+  ++ pathTests
 
 main = do
   rulesString <- readFile "data/effective_tld_names.dat"

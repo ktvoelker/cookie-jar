@@ -42,13 +42,14 @@ host2a = "a.host2.example"
 host2b = "b.host2.example"
 pubHost = "example"
 
-path1, path2, path1a, path1b, path2a, path2b :: Bytes
+path1, path2, path1a, path1b, path2a, path2b, pathRoot :: Bytes
 path1 = "/path1"
 path2 = "/path2"
 path1a = "/path1/a"
 path1b = "/path1/b"
 path2a = "/path2/a"
 path2b = "/path2/b"
+pathRoot = "/"
 
 ep = Endpoint
 

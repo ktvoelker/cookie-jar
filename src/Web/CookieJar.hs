@@ -49,7 +49,7 @@ defaultPath :: Endpoint -> Bytes
 defaultPath Endpoint{..} = case BS.uncons epPath of
   Just (0x2F, bs) ->
     let pos = last $ BS.findIndices (== slash) epPath
-    in if pos == 0 then root else BS.take (BS.length epPath - pos) epPath
+    in if pos == 0 then root else BS.take pos epPath
   _ -> root
   where
     root = BS.pack [slash]
