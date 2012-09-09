@@ -3,7 +3,6 @@ To-Do
 =====
 
 * Write tests
-  * Incorporate the existing public domain test program
 
 * Use gnuidn to convert the binary data to text to provide IDNA compatibility
 

@@ -3,6 +3,7 @@ module Web.CookieJar.Parser.Date where
 
 import qualified Data.ByteString as BS
 import qualified Data.Text.Encoding as E
+import qualified Data.CaseInsensitive as CI
 
 import Control.Monad
 import Data.Maybe
@@ -47,7 +48,7 @@ data DateFields =
 
 parseTimeToken :: Bytes -> Maybe (Int, Int, Int)
 parseTimeToken bs = do
-  let [hour, min, secPlus] = map BS.unpack $ take 3 $ BS.split colon bs
+  [hour, min, secPlus] <- return $ map BS.unpack $ take 3 $ BS.split colon bs
   let sec = takeWhile isDigit secPlus
   let fs = [hour, min, sec]
   guard $ all (lengthRange 1 2) fs
@@ -69,10 +70,9 @@ parseIntToken lo hi bs = do
   guard $ lengthRange lo hi ds
   digitsValue ds
 
-months :: [(Bytes, Int)]
+months :: [(CI.CI Bytes, Int)]
 months =
   flip zip [1 ..]
-  $ map E.encodeUtf8
   $ [ "jan"
     , "feb"
     , "mar"
@@ -87,9 +87,8 @@ months =
     , "dec"
     ]
 
--- TODO case-insensitive?
 parseMonthToken :: Bytes -> Maybe Int
-parseMonthToken = flip lookup months . BS.take 3
+parseMonthToken = flip lookup months . CI.mk . BS.take 3
 
 parseDateToken :: Bytes -> DateFields -> DateFields
 parseDateToken bs df
@@ -111,7 +110,11 @@ parseDateToken bs df
 
 parseDateFields :: Bytes -> DateFields
 parseDateFields =
-  foldr parseDateToken (DateFields Nothing Nothing Nothing Nothing)
+  -- A left fold is needed because the same field can look like both
+  -- a day-of-the-month and a year, and RFC 6265 requires that the leftmost
+  -- token which can be parsed as a day-of-the-month is used as the day of
+  -- the month.
+  foldl (flip parseDateToken) (DateFields Nothing Nothing Nothing Nothing)
   . tokenizeDate
 
 parseDate :: Bytes -> Maybe Time
@@ -134,7 +137,7 @@ parseDate bs = case parseDateFields bs of
       guard
         $  dom >= 1
         && dom <= 31
-        && year' < 1601
+        && year' >= 1601
         && hour <= 23
         && min <= 59
         && sec <= 59

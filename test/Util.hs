@@ -31,10 +31,19 @@ time =
 host1, host2 :: CI Bytes
 host1 = "host1.example"
 host2 = "host2.example"
+host1a = "a.host1.example"
+host1b = "b.host1.example"
+host2a = "a.host2.example"
+host2b = "b.host2.example"
+pubHost = "example"
 
 path1, path2 :: Bytes
 path1 = "/path1"
 path2 = "/path2"
+path1a = "/path1/a"
+path1b = "/path1/b"
+path2a = "/path2/a"
+path2b = "/path2/b"
 
 ep = Endpoint
 
@@ -73,6 +82,16 @@ send now ep expect = do
     [("Cookie", actual)] ->
       assertEqual "Cookie data sent" (E.encodeUtf8 $ T.pack expect) actual
     _ -> assertFailure "Did not send exactly one header named Cookie"
+  put jar'
+  dump
+
+noSend :: Time -> Endpoint -> Session ()
+noSend now ep = do
+  liftIO $ do
+    putStr "noSend"
+  jar <- get
+  let (hs, jar') = sendHeaders now jar ep
+  liftIO $ assertEqual "Cookies sent" [] hs
   put jar'
   dump
 

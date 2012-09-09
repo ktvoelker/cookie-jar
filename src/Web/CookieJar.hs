@@ -68,7 +68,7 @@ endSession :: Jar -> Jar
 endSession = modifyCookies $ filter (not . cPersist)
 
 expire :: Time -> Jar -> Jar
-expire now = modifyCookies $ filter (not . (== Just False) . fmap (< now) . cExpires)
+expire now = modifyCookies . filter $ not . (== Just True) . fmap (<= now) . cExpires
 
 receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
 receive now ep@Endpoint{..} SetCookie{..} jar =

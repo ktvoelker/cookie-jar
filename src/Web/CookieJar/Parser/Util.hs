@@ -54,6 +54,7 @@ digitValue w
 digitsValue :: (Integral a) => [Word8] -> Maybe a
 digitsValue = f . reverse . map digitValue
   where
+    f []            = Just 0
     f (Nothing : _) = Nothing
     f (Just d : ds) = fmap ((+ d) . (* 10)) $ f ds
 
