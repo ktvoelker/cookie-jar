@@ -3,9 +3,6 @@ To-Do
 =====
 
 * Write more tests
-  * Overwriting one cookie with another
-    * Get identical paths and domains via different mechanisms
-    * Creation and last-access times
   * The "persistent" flag
   * Public suffixes
   * Secure and HttpOnly

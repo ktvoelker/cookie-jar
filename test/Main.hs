@@ -16,6 +16,7 @@ import Domain
 import Expires
 import MaxAge
 import Path
+import Replace
 
 sessionTests rules = map ($ rules)
   $  simpleTests
@@ -23,6 +24,7 @@ sessionTests rules = map ($ rules)
   ++ expiresTests
   ++ maxAgeTests
   ++ pathTests
+  ++ replaceTests
 
 main = do
   rulesString <- readFile "data/effective_tld_names.dat"
