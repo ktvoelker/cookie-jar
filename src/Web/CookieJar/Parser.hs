@@ -31,7 +31,7 @@ parseAttribute bs = maybe (const $ Just id) id (lookup (CI.mk name) avParsers) v
   where
     (rawName, rawValue) = BS.span (/= equals) bs
     name = trim rawName
-    value = trim rawValue
+    value = trim $ BS.drop 1 rawValue
 
 avParsers :: [(CI.CI Bytes, Bytes -> Maybe Attribute)]
 avParsers =

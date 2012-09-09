@@ -33,7 +33,7 @@ week = 7 * day
 year = 365 * day
 year2000 = 946684800
 
-host1, host2 :: CI Bytes
+host1, host2, host1a, host1b, host2a, host2b, pubHost :: CI Bytes
 host1 = "host1.example"
 host2 = "host2.example"
 host1a = "a.host1.example"
@@ -42,7 +42,7 @@ host2a = "a.host2.example"
 host2b = "b.host2.example"
 pubHost = "example"
 
-path1, path2 :: Bytes
+path1, path2, path1a, path1b, path2a, path2b :: Bytes
 path1 = "/path1"
 path2 = "/path2"
 path1a = "/path1/a"
@@ -60,9 +60,11 @@ runSession = flip evalStateT . emptyJar . Just
 sessionTest :: String -> Session () -> P.Rules -> Test
 sessionTest n s r = TestLabel n $ TestCase $ runSession r s
 
-debug = hPutStr stderr
+enableDebug = False
 
-debugLn = hPutStrLn stderr
+debug = if enableDebug then hPutStr stderr else const $ return ()
+
+debugLn = if enableDebug then hPutStrLn stderr else const $ return ()
 
 dump :: (MonadState Jar m, MonadIO m) => m ()
 dump = get >>= liftIO . debugLn . show . jarCookies
