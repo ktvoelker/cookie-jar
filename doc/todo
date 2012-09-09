@@ -11,6 +11,10 @@ To-Do
   * Secure and HttpOnly
   * The sorting of multiple cookies in a request
 
+* Add documentation
+
+* Set reasonable dependencies and a meaningful version number
+
 * Use gnuidn to convert the binary data to text to provide IDNA compatibility
   * Add tests
 
