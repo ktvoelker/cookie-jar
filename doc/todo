@@ -11,6 +11,10 @@ To-Do
   * Secure and HttpOnly
   * The sorting of multiple cookies in a request
 
+* Add another parser for Set-Cookie headers which only accepts cookies that meet the
+  strict criteria specified in Section 4 (Server Requirements)
+  * As part of this, use a strict date parser (RFC-2616, Section 3.3.1)
+
 * Add documentation
 
 * Set reasonable dependencies and a meaningful version number
