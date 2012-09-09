@@ -19,19 +19,20 @@ type Time = UTCTime
 
 type Bytes = BS.ByteString
 
+-- |A cookie as stored by a user-agent (see section 5.3 of the RFC)
 data Cookie =
   Cookie
-  { cName     :: Bytes
-  , cValue    :: Bytes
-  , cExpires  :: Maybe Time
-  , cDomain   :: CI Bytes
-  , cPath     :: Bytes
-  , cCreation :: Time
-  , cAccess   :: Time
-  , cPersist  :: Bool
-  , cHostOnly :: Bool
-  , cSecure   :: Bool
-  , cHttpOnly :: Bool
+  { cName     :: Bytes       -- ^The /name/ field
+  , cValue    :: Bytes       -- ^The /value/ field
+  , cExpires  :: Maybe Time  -- ^The /expiry-time/ field
+  , cDomain   :: CI Bytes    -- ^The /domain/ field
+  , cPath     :: Bytes       -- ^The /path/ field
+  , cCreation :: Time        -- ^The /creation-time/ field
+  , cAccess   :: Time        -- ^The /last-access-time/ field
+  , cPersist  :: Bool        -- ^The /persistent-flag/ field
+  , cHostOnly :: Bool        -- ^The /host-only-flag/ field
+  , cSecure   :: Bool        -- ^The /secure-only-flag/ field
+  , cHttpOnly :: Bool        -- ^The /http-only-flag/ field
   } deriving (Show)
 
 -- |The state of a user-agent
@@ -63,7 +64,7 @@ data Endpoint =
 -- header
 --
 -- This type is based on the output produced by the header parsing
--- algorithm described in section 5.2 of RFC 6265, but represented in
+-- algorithm described in section 5.2 of the RFC, but represented in
 -- a style more suited to Haskell. In particular, the RFC describes the
 -- algorithm as appending parsed attributes to a list in the order they are
 -- encountered; in the processing of these attributes (section 5.3), only
@@ -92,6 +93,9 @@ data SetCookie =
   } deriving (Show)
 
 -- |A set-cookie request with a name and value but no attributes
-emptySetCookie :: Bytes -> Bytes -> SetCookie
+emptySetCookie
+  :: Bytes      -- ^The /cookie-name/
+  -> Bytes      -- ^The /cookie-value/
+  -> SetCookie
 emptySetCookie n v = SetCookie n v Nothing Nothing False False Nothing Nothing
 

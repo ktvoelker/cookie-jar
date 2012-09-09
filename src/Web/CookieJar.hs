@@ -2,6 +2,11 @@
 -- |This module implements algorithms for HTTP user-agents described in
 -- section 5 of RFC 6265, \"HTTP State Management Mechanism\"
 -- (<http://www.rfc-editor.org/rfc/rfc6265.txt>).
+--
+-- The algorithms in the RFC make frequent use of the current time. For
+-- flexibility, this module does not retrieve the current time from the
+-- underlying system; instead, operations which may need the current time
+-- take it as a parameter.
 module Web.CookieJar
   ( Jar()
   , emptyJar
@@ -66,14 +71,20 @@ pathMatches rp cp
     pre = cp `BS.isPrefixOf` rp
     root = BS.pack [slash]
 
--- | End the current session, as described in section 5.3 of RFC 6265, on page 24.
+-- |End the current session, as described in section 5.3 of the RFC, on page 24.
 endSession :: Jar -> Jar
 endSession = modifyCookies $ filter cPersist
 
 expire :: Time -> Jar -> Jar
 expire now = modifyCookies . filter $ not . (== Just True) . fmap (<= now) . cExpires
 
-receive :: Time -> Endpoint -> SetCookie -> Jar -> Jar
+-- |Receive a set-cookie request, possibly updating the user-agent state
+receive
+  :: Time       -- ^The current time
+  -> Endpoint   -- ^The source of the request
+  -> SetCookie  -- ^The request
+  -> Jar        -- ^The user-agent state
+  -> Jar
 receive now ep@Endpoint{..} SetCookie{..} jar =
   expire now
   $ if abort then jar else Jar (jarRules jar)
@@ -148,10 +159,32 @@ shouldSend Endpoint{..} Cookie{..} =
       cHostOnly && epDomain == cDomain
       || not cHostOnly && epDomain `domainMatches` cDomain
 
-send :: Time -> Jar -> Endpoint -> ([Cookie], Jar)
+-- |Return the cookies that should be sent as part of a request
+--
+-- The order of the cookies is specified by section 5.4.2 of the RFC.
+--
+-- Note that this function returns an updated state because the last-access
+-- times of the cookies being sent must be updated (see section 5.4.3 of
+-- the RFC). It may be safe to ignore these state changes in certain
+-- circumstances, as the only purpose of the last-access field (according
+-- to RFC 6265) is to determine the order in which cookies are evicted when
+-- space limits are exceeded. Space limits are an optional feature of the
+-- RFC and are not yet implemented by this module.
+send
+  :: Time             -- ^The current time
+  -> Jar              -- ^The user-agent state
+  -> Endpoint         -- ^The destination of the request
+  -> ([Cookie], Jar)
 send now = sendNoExpire now . expire now
 
-receiveHeaders :: Time -> Endpoint -> ResponseHeaders -> Jar -> Jar
+-- |Receive any set-cookie requests present in a list of HTTP response
+-- headers, possibly updating the user-agent state
+receiveHeaders
+  :: Time       -- ^The current time
+  -> Endpoint   -- ^The source of the request
+  -> ResponseHeaders -- ^The HTTP response headers
+  -> Jar        -- ^The user-agent state
+  -> Jar
 receiveHeaders time host =
   flip (foldr $ receive time host)
   . catMaybes
@@ -161,7 +194,14 @@ receiveHeaders time host =
 makeHeaderValue :: Cookie -> Bytes
 makeHeaderValue Cookie{..} = cName `BS.append` BS.cons equals cValue
 
-sendHeaders :: Time -> Jar -> Endpoint -> (RequestHeaders, Jar)
+-- |Return the cookie headers that should be sent as part of an HTTP request
+--
+-- See "send" for some important notes which also apply to this function.
+sendHeaders
+  :: Time             -- ^The current time
+  -> Jar              -- ^The user-agent state
+  -> Endpoint         -- ^The destination of the request
+  -> (RequestHeaders, Jar)
 sendHeaders now jar ep = (map ("Cookie",) bs, jar')
   where
     bs = case map makeHeaderValue cs of
