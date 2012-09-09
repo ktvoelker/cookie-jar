@@ -92,7 +92,22 @@ receive now ep@Endpoint{..} SetCookie{..} jar =
       partition (\Cookie{..} -> (cName, cDomain, cPath) == (scName, domain, path))
       $ jarCookies jar
     same = listToMaybe $ take 1 sames
-    exp = fmap (flip addUTCTime now . fromIntegral) scMaxAge `mplus` scExpires
+    {--
+     - Non-positive max-age values are supposed to result in an expiration
+     - date set to the "earliest representable time" (section 5.2.2).
+     - However, UTCTime does not have an earliest representable time, as it
+     - allows negative days, which are stored using infinite-precision
+     - integers.
+     -
+     - This isn't a huge problem, because the effect of setting a cookie to
+     - expire at the earliest representable time is that it expires
+     - immediately, which is an effect we can achieve by setting the
+     - expiration time to any time equal to or earlier than now.
+     --}
+    exp =
+      if fmap (< 0) scMaxAge == Just True
+        then Just now
+        else fmap (flip addUTCTime now . fromIntegral) scMaxAge `mplus` scExpires
     public =
       let d = fmap original scDomain >>= P.makeDomain
       in isJust d && fmap (P.publicSuffix $ jarRules jar) d == d

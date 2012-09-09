@@ -73,8 +73,10 @@ parseExpires =
 parseMaxAge :: Bytes -> Maybe Attribute
 parseMaxAge bs
   | bs == BS.empty = Just id
-  | Just (0x2D, ds) <- BS.uncons bs = f ds
-  | otherwise = f bs
+  | Just (0x2D, ds) <- BS.uncons bs = f (-1) ds
+  | otherwise = f 1 bs
   where
-    f ds = Just $ \sc -> sc { scMaxAge = digitsValue $ BS.unpack ds }
+    f sign ds =
+      Just
+      $ \sc -> sc { scMaxAge = fmap (sign *) $ digitsValue $ BS.unpack ds }
 
