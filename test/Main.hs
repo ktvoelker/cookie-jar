@@ -19,6 +19,7 @@ import Path
 import Replace
 import Persistent
 import Secure
+import HttpOnly
 
 sessionTests rules = map ($ rules)
   $  simpleTests
@@ -29,6 +30,7 @@ sessionTests rules = map ($ rules)
   ++ replaceTests
   ++ persistentTests
   ++ secureTests
+  ++ httpOnlyTests
 
 main = do
   rulesString <- readFile "data/effective_tld_names.dat"

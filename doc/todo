@@ -3,7 +3,6 @@ To-Do
 =====
 
 * Write more tests
-  * Secure and HttpOnly
   * Public suffixes
   * The sorting of multiple cookies in a request
 
