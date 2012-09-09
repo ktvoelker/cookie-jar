@@ -1,15 +1,17 @@
 
+-- |This module implements algorithms for HTTP user-agents described in
+-- section 5 of RFC 6265, \"HTTP State Management Mechanism\"
+-- (<http://www.rfc-editor.org/rfc/rfc6265.txt>).
 module Web.CookieJar
   ( Jar()
   , emptyJar
+  , Endpoint(..)
   , Cookie(..)
   , SetCookie(..)
-  , SetCookiePath(..)
   , emptySetCookie
-  , Endpoint(..)
   , receive
-  , send
   , receiveHeaders
+  , send
   , sendHeaders
   , endSession
   ) where
@@ -64,6 +66,7 @@ pathMatches rp cp
     pre = cp `BS.isPrefixOf` rp
     root = BS.pack [slash]
 
+-- | End the current session, as described in section 5.3 of RFC 6265, on page 24.
 endSession :: Jar -> Jar
 endSession = modifyCookies $ filter cPersist
 
@@ -120,10 +123,7 @@ receive now ep@Endpoint{..} SetCookie{..} jar =
       || fmap cHttpOnly same == Just True && not epHttp
       || public && not exactDomain
     domain = maybe epDomain id scDomain'
-    path = case scPath of
-      Nothing -> defaultPath ep
-      Just DefaultPath -> defaultPath ep
-      Just (Path p) -> p
+    path = maybe (defaultPath ep) id scPath
 
 sendNoExpire :: Time -> Jar -> Endpoint -> ([Cookie], Jar)
 sendNoExpire now jar ep =

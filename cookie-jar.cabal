@@ -9,8 +9,15 @@ copyright: (c) 2012 Karl Voelker
 stability: unstable
 homepage: https://github.com/ktvoelker/cookie-jar
 maintainer: Karl Voelker <ktvoelker@gmail.com>
-synopsis: An HTTP cookie client based on RFC-6265
-description: TODO
+synopsis: An HTTP cookie client based on RFC 6265
+description:
+  This package implements algorithms for HTTP user-agents described in
+  section 5 of RFC 6265, \"HTTP State Management Mechanism\"
+  (<http://www.rfc-editor.org/rfc/rfc6265.txt>).
+  .
+  The main module is "Web.CookieJar". Support functions for determining whether
+  a domain name is a suffix open for public registration are in
+  "Network.DNS.Public".
 category: Web
 author: Karl Voelker <ktvoelker@gmail.com>
 

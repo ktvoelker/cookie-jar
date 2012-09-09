@@ -51,11 +51,11 @@ parseHttpOnly = const $ Just $ \sc -> sc { scHttpOnly = True }
 
 parsePath :: Bytes -> Maybe Attribute
 parsePath bs
-  | bs == BS.empty = f DefaultPath
-  | BS.head bs /= slash = f DefaultPath
-  | otherwise = f $ Path bs
+  | bs == BS.empty = f Nothing
+  | BS.head bs /= slash = f Nothing
+  | otherwise = f $ Just bs
   where
-    f p = Just $ \sc -> sc { scPath = Just p }
+    f p = Just $ \sc -> sc { scPath = p }
 
 parseDomain :: Bytes -> Maybe Attribute
 parseDomain bs
