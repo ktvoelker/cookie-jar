@@ -88,7 +88,7 @@ send now ep expect = do
     debug "send "
     debugLn expect
   jar <- get
-  let (hs, jar') = sendHeaders now jar ep
+  let (hs, jar') = sendHeaders now ep jar
   liftIO $ case hs of
     [("Cookie", actual)] ->
       assertEqual "Cookie data sent" (E.encodeUtf8 $ T.pack expect) actual
@@ -100,7 +100,7 @@ noSend :: Time -> Endpoint -> Session ()
 noSend now ep = do
   liftIO $ debugLn "noSend"
   jar <- get
-  let (hs, jar') = sendHeaders now jar ep
+  let (hs, jar') = sendHeaders now ep jar
   liftIO $ assertEqual "Cookies sent" [] hs
   put jar'
   dump

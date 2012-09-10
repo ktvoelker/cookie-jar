@@ -7,13 +7,16 @@
 -- flexibility, this module does not retrieve the current time from the
 -- underlying system; instead, operations which may need the current time
 -- take it as a parameter.
-module Web.CookieJar
-  ( Jar()
+module Web.CookieJar (
+  -- * Types
+    Jar()
   , emptyJar
   , Endpoint(..)
   , Cookie(..)
   , SetCookie(..)
   , emptySetCookie
+  -- * Algorithms
+  , parseSetCookie
   , receive
   , receiveHeaders
   , send
@@ -136,8 +139,8 @@ receive now ep@Endpoint{..} SetCookie{..} jar =
     domain = maybe epDomain id scDomain'
     path = maybe (defaultPath ep) id scPath
 
-sendNoExpire :: Time -> Jar -> Endpoint -> ([Cookie], Jar)
-sendNoExpire now jar ep =
+sendNoExpire :: Time -> Endpoint -> Jar -> ([Cookie], Jar)
+sendNoExpire now ep jar =
   (sortBy headerOrder send', Jar (jarRules jar) $ send' ++ noSend)
   where
     (send, noSend) = partition (shouldSend ep) $ jarCookies jar
@@ -172,10 +175,10 @@ shouldSend Endpoint{..} Cookie{..} =
 -- RFC and are not yet implemented by this module.
 send
   :: Time             -- ^The current time
-  -> Jar              -- ^The user-agent state
   -> Endpoint         -- ^The destination of the request
+  -> Jar              -- ^The user-agent state
   -> ([Cookie], Jar)
-send now = sendNoExpire now . expire now
+send now ep = sendNoExpire now ep . expire now
 
 -- |Receive any set-cookie requests present in a list of HTTP response
 -- headers, possibly updating the user-agent state
@@ -199,14 +202,14 @@ makeHeaderValue Cookie{..} = cName `BS.append` BS.cons equals cValue
 -- See "send" for some important notes which also apply to this function.
 sendHeaders
   :: Time             -- ^The current time
-  -> Jar              -- ^The user-agent state
   -> Endpoint         -- ^The destination of the request
+  -> Jar              -- ^The user-agent state
   -> (RequestHeaders, Jar)
-sendHeaders now jar ep = (map ("Cookie",) bs, jar')
+sendHeaders now ep jar = (map ("Cookie",) bs, jar')
   where
     bs = case map makeHeaderValue cs of
       [] -> []
       (b : bs) -> [BS.concat $ b : concatMap ((sep :) . (: [])) bs]
     sep = BS.pack [semicolon, space]
-    (cs, jar') = send now jar ep
+    (cs, jar') = send now ep jar
 

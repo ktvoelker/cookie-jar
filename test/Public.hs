@@ -12,6 +12,7 @@ import System.Environment
 import Test.HUnit
 
 import Network.DNS.Public
+import Network.DNS.Public.Types (dropSubdomains)
 
 checkPublicSuffix :: Rules -> String -> String -> Test
 checkPublicSuffix rules domain suffix =

@@ -33,14 +33,14 @@ data Cookie =
   , cHostOnly :: Bool        -- ^The /host-only-flag/ field
   , cSecure   :: Bool        -- ^The /secure-only-flag/ field
   , cHttpOnly :: Bool        -- ^The /http-only-flag/ field
-  } deriving (Show)
+  } deriving (Eq, Show)
 
 -- |The state of a user-agent
 data Jar =
   Jar
   { jarRules   :: P.Rules
   , jarCookies :: [Cookie]
-  } deriving (Show)
+  } deriving (Eq, Show)
 
 -- |The initial state of a user-agent
 emptyJar
@@ -90,7 +90,7 @@ data SetCookie =
   , scHttpOnly :: Bool              -- ^The /http-only/ attribute
   , scExpires  :: Maybe Time        -- ^The /expires/ attribute
   , scMaxAge   :: Maybe Integer     -- ^The /max-age/ attribute
-  } deriving (Show)
+  } deriving (Eq, Show)
 
 -- |A set-cookie request with a name and value but no attributes
 emptySetCookie

@@ -10,6 +10,7 @@ import Web.CookieJar.Types
 import Web.CookieJar.Parser.Date
 import Web.CookieJar.Parser.Util
 
+-- |Parse a /set-cookie-string/ as described in section 5.2 of the RFC
 parseSetCookie :: Bytes -> Maybe SetCookie
 parseSetCookie bs = do
   guard $ name /= BS.empty

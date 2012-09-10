@@ -1,6 +1,7 @@
 
 module Network.DNS.Public.Types
-  ( Domain()
+  ( Domain(..)
+  , Pattern(..)
   , makeDomain
   , makePattern
   , makeTextDomain
@@ -9,7 +10,7 @@ module Network.DNS.Public.Types
   , makeStringPattern
   , showDomain
   , isSuffixOf
-  , countLabels
+  , matches
   , dropSubdomains
   ) where
 
@@ -35,40 +36,15 @@ lowerDiff = lowercaseA - capitalA
 byteToLower :: Word8 -> Word8
 byteToLower n = if n >= capitalA && n <= capitalZ then n + lowerDiff else n
 
-type family Label (a :: Bool) :: *
+unify Nothing _ = True
+unify (Just a) b = a == b
 
-type instance Label True = Maybe BS.ByteString
+-- |A domain name, which is a sequence of domain labels
+newtype Domain = Domain { getLabels :: [BS.ByteString] } deriving (Eq, Show)
 
-type instance Label False = BS.ByteString
-
-class Unify a b where
-  unify :: a -> b -> Bool
-
-instance Unify (Maybe BS.ByteString) BS.ByteString where
-  unify Nothing _ = True
-  unify (Just a) b = a == b
-
-instance Unify BS.ByteString (Maybe BS.ByteString) where
-  unify a b = unify b a
-
-instance Unify BS.ByteString BS.ByteString where
-  unify a b = a == b
-
--- |A domain name or domain pattern
---
--- A domain name is a sequence of domain labels. A domain pattern is like
--- a domain name, but the sequence may contain wildcards in addition to
--- domain labels.
---
--- The type parameter is 'True' for patterns and 'False' for names.
-newtype Domain (a :: Bool) = Domain { getLabels :: [Label a] }
-
-instance Eq (Domain False) where
-  (Domain as) == (Domain bs) = as == bs
-
-deriving instance Show (Domain True)
-
-deriving instance Show (Domain False)
+-- |A domain pattern, which is like a domain name, except that the sequence
+-- may also contain wildcards
+newtype Pattern = Pattern { getPattern :: [Maybe BS.ByteString] } deriving (Eq, Show)
 
 period :: Word8
 period = 46
@@ -80,16 +56,16 @@ split :: BS.ByteString -> [BS.ByteString]
 split = reverse . BS.split period . BS.map byteToLower . BS.dropWhile (== period)
 
 -- |Parse a domain name
-makeDomain :: BS.ByteString -> Maybe (Domain False)
+makeDomain :: BS.ByteString -> Maybe (Domain)
 makeDomain bs = case split bs of
   [] -> Nothing
   xs -> Just $ Domain xs
 
 -- |Parse a domain pattern, where asterisks are wildcards
-makePattern :: BS.ByteString -> Maybe (Domain True)
+makePattern :: BS.ByteString -> Maybe (Pattern)
 makePattern bs = case split bs of
   [] -> Nothing
-  xs -> Just $ Domain $ map f xs
+  xs -> Just $ Pattern $ map f xs
   where
     f x
       | x == star = Nothing
@@ -101,41 +77,49 @@ fromText t = case IDNA.toASCII IDNA.defaultFlags $ T.dropWhile (== '.') t of
   Right bs -> Just bs
 
 -- |Parse a Unicode domain name
-makeTextDomain :: T.Text -> Maybe (Domain False)
+makeTextDomain :: T.Text -> Maybe (Domain)
 makeTextDomain = makeDomain <=< fromText
 
 -- |Parse a Unicode domain pattern
-makeTextPattern :: T.Text -> Maybe (Domain True)
+makeTextPattern :: T.Text -> Maybe (Pattern)
 makeTextPattern = makePattern <=< fromText
 
 fromString :: String -> Maybe BS.ByteString
 fromString = fromText . T.pack
 
 -- |Parse a Unicode domain name
-makeStringDomain :: String -> Maybe (Domain False)
+makeStringDomain :: String -> Maybe (Domain)
 makeStringDomain = makeDomain <=< fromString
 
 -- |Parse a Unicode domain pattern
-makeStringPattern :: String -> Maybe (Domain True)
+makeStringPattern :: String -> Maybe (Pattern)
 makeStringPattern = makePattern <=< fromString
 
-isSuffixOf :: (Unify (Label a) BS.ByteString) => Domain a -> Domain False -> Bool
-isSuffixOf (Domain as) (Domain bs) = f as bs
+-- TODO rewrite
+matchesSuffixOf :: (a -> b -> Bool) -> [a] -> [b] -> Bool
+matchesSuffixOf pred as bs = f as bs
   where
     f [] _ = True
     f _ [] = False
     f (a : as) (b : bs)
-      | unify a b = f as bs
+      | pred a b = f as bs
       | otherwise = False
 
-countLabels :: Domain a -> Int
-countLabels = length . getLabels
+isSuffixOf :: Domain -> Domain -> Bool
+isSuffixOf as bs =
+  let f = matchesSuffixOf (==)
+  in getLabels as `f` getLabels bs
+
+matches :: Pattern -> Domain -> Bool
+matches as bs =
+  let f = matchesSuffixOf unify
+  in getPattern as `f` getLabels bs
 
 -- |Show the ASCII form of a domain name
-showDomain :: Domain False -> BS.ByteString
+showDomain :: Domain -> BS.ByteString
 showDomain (Domain xs) = BS.drop 1 . BS.concat . map (BS.cons period) . reverse $ xs
 
 -- |Drop a number of the earliest labels or wildcards in a domain
-dropSubdomains :: Int -> Domain a -> Domain a
+dropSubdomains :: Int -> Domain -> Domain
 dropSubdomains n (Domain as) = Domain $ take (length as - n) as
 
