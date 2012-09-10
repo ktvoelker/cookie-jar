@@ -54,6 +54,13 @@ instance Unify BS.ByteString (Maybe BS.ByteString) where
 instance Unify BS.ByteString BS.ByteString where
   unify a b = a == b
 
+-- |A domain name or domain pattern
+--
+-- A domain name is a sequence of domain labels. A domain pattern is like
+-- a domain name, but the sequence may contain wildcards in addition to
+-- domain labels.
+--
+-- The type parameter is 'True' for patterns and 'False' for names.
 newtype Domain (a :: Bool) = Domain { getLabels :: [Label a] }
 
 instance Eq (Domain False) where
@@ -72,11 +79,13 @@ star = BS.pack [42]
 split :: BS.ByteString -> [BS.ByteString]
 split = reverse . BS.split period . BS.map byteToLower . BS.dropWhile (== period)
 
+-- |Parse a domain name
 makeDomain :: BS.ByteString -> Maybe (Domain False)
 makeDomain bs = case split bs of
   [] -> Nothing
   xs -> Just $ Domain xs
 
+-- |Parse a domain pattern, where asterisks are wildcards
 makePattern :: BS.ByteString -> Maybe (Domain True)
 makePattern bs = case split bs of
   [] -> Nothing
@@ -91,18 +100,22 @@ fromText t = case IDNA.toASCII IDNA.defaultFlags $ T.dropWhile (== '.') t of
   Left _ -> Nothing
   Right bs -> Just bs
 
+-- |Parse a Unicode domain name
 makeTextDomain :: T.Text -> Maybe (Domain False)
 makeTextDomain = makeDomain <=< fromText
 
+-- |Parse a Unicode domain pattern
 makeTextPattern :: T.Text -> Maybe (Domain True)
 makeTextPattern = makePattern <=< fromText
 
 fromString :: String -> Maybe BS.ByteString
 fromString = fromText . T.pack
 
+-- |Parse a Unicode domain name
 makeStringDomain :: String -> Maybe (Domain False)
 makeStringDomain = makeDomain <=< fromString
 
+-- |Parse a Unicode domain pattern
 makeStringPattern :: String -> Maybe (Domain True)
 makeStringPattern = makePattern <=< fromString
 
@@ -118,9 +131,11 @@ isSuffixOf (Domain as) (Domain bs) = f as bs
 countLabels :: Domain a -> Int
 countLabels = length . getLabels
 
+-- |Show the ASCII form of a domain name
 showDomain :: Domain False -> BS.ByteString
 showDomain (Domain xs) = BS.drop 1 . BS.concat . map (BS.cons period) . reverse $ xs
 
+-- |Drop a number of the earliest labels or wildcards in a domain
 dropSubdomains :: Int -> Domain a -> Domain a
 dropSubdomains n (Domain as) = Domain $ take (length as - n) as
 

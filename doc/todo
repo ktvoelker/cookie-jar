@@ -2,9 +2,9 @@
 To-Do
 =====
 
-* Add documentation
+* Set reasonable dependency version requirements and a meaningful version number
 
-* Set reasonable dependencies and a meaningful version number
+* Add a README
 
 * Add another parser for Set-Cookie headers which only accepts cookies that meet the
   strict criteria specified in Section 4 (Server Requirements)
