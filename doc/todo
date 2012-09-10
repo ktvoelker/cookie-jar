@@ -10,5 +10,6 @@ To-Do
   * Add tests
 
 * Implement configurable storage size limits and the eviction rules from RFC-6265
+  (see section 5.3, page 23)
   * Add tests
 
