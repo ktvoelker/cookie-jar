@@ -2,8 +2,6 @@
 To-Do
 =====
 
-* Set reasonable dependency version requirements and a meaningful version number
-
 * Add a README
 
 * Add another parser for Set-Cookie headers which only accepts cookies that meet the

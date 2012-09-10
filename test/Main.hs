@@ -2,7 +2,6 @@
 module Main where
 
 import Control.Monad
-import Data.Array
 import Test.HUnit
 import System.Exit
 

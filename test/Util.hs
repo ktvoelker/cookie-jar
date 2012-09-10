@@ -7,7 +7,6 @@ import qualified Data.Text.Encoding as E
 
 import Control.Monad
 import Control.Monad.State
-import Data.Array
 import Data.CaseInsensitive (CI)
 import Data.Time
 import Data.Time.Clock.POSIX
