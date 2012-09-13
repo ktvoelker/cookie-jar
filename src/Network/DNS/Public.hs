@@ -29,13 +29,16 @@ import Data.Maybe
 
 import Network.DNS.Public.Types
 
-data Rule = Rule { positive :: Bool, pattern :: Pattern } deriving (Eq, Show)
+data Rule = Rule Bool Pattern deriving (Eq, Show)
+
+pattern :: Rule -> Pattern
+pattern (Rule _ p) = p
 
 -- |Rules for determining the public suffix of a domain
 --
 -- A concrete set of rules can be obtained from
 -- <http://publicsuffix.org/list/> in a format understood by "parseRules".
-newtype Rules = Rules { getRules :: [Rule] } deriving (Eq, Show)
+newtype Rules = Rules [Rule] deriving (Eq, Show)
 
 orderRules :: Rule -> Rule -> Ordering
 orderRules (Rule x1 d1) (Rule x2 d2) = case compare x1 x2 of

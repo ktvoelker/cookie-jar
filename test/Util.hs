@@ -1,24 +1,18 @@
 
 module Util where
 
-import qualified Data.ByteString as BS
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as E
 
-import Control.Monad
 import Control.Monad.State
-import Data.CaseInsensitive (CI)
 import Data.Time
 import Data.Time.Clock.POSIX
-import System.Exit
 import System.IO (hPutStr, hPutStrLn, stderr)
 import Test.HUnit
 
 import qualified Network.DNS.Public as P
 import Web.CookieJar
 import Web.CookieJar.Types
-
-import Public
 
 time :: Int -> UTCTime
 time = posixSecondsToUTCTime . fromIntegral

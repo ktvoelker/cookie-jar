@@ -27,7 +27,6 @@ module Web.CookieJar (
 import qualified Data.ByteString as BS
 
 import Control.Monad
-import Data.Functor
 import Data.List
 import Data.Maybe
 import Data.Time
@@ -58,8 +57,9 @@ isHostName _ = True
 defaultPath :: Endpoint -> Bytes
 defaultPath Endpoint{..} = case BS.uncons epPath of
   Just (0x2F, bs) ->
-    let pos = last $ BS.findIndices (== slash) epPath
-    in if pos == 0 then root else BS.take pos epPath
+    case listToMaybe $ BS.findIndices (== slash) bs of
+      Nothing -> root
+      Just pos -> BS.take (pos + 1) epPath
   _ -> root
   where
     root = BS.pack [slash]

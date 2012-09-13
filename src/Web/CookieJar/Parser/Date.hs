@@ -2,7 +2,6 @@
 module Web.CookieJar.Parser.Date where
 
 import qualified Data.ByteString as BS
-import qualified Data.Text.Encoding as E
 import qualified Data.CaseInsensitive as CI
 
 import Control.Monad

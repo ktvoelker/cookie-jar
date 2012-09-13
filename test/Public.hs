@@ -1,14 +1,7 @@
 
 module Public (publicSuffixTests) where
 
-import qualified Data.ByteString as BS
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as E
-
-import Control.Monad
 import Data.Functor
-import Data.String
-import System.Environment
 import Test.HUnit
 
 import Network.DNS.Public

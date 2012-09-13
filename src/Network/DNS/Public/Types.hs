@@ -36,9 +36,6 @@ lowerDiff = lowercaseA - capitalA
 byteToLower :: Word8 -> Word8
 byteToLower n = if n >= capitalA && n <= capitalZ then n + lowerDiff else n
 
-unify Nothing _ = True
-unify (Just a) b = a == b
-
 -- |A domain name, which is a sequence of domain labels
 newtype Domain = Domain { getLabels :: [BS.ByteString] } deriving (Eq, Show)
 
@@ -95,14 +92,13 @@ makeStringDomain = makeDomain <=< fromString
 makeStringPattern :: String -> Maybe (Pattern)
 makeStringPattern = makePattern <=< fromString
 
--- TODO rewrite
 matchesSuffixOf :: (a -> b -> Bool) -> [a] -> [b] -> Bool
-matchesSuffixOf pred as bs = f as bs
+matchesSuffixOf p = f
   where
     f [] _ = True
     f _ [] = False
     f (a : as) (b : bs)
-      | pred a b = f as bs
+      | p a b = f as bs
       | otherwise = False
 
 isSuffixOf :: Domain -> Domain -> Bool
@@ -112,7 +108,7 @@ isSuffixOf as bs =
 
 matches :: Pattern -> Domain -> Bool
 matches as bs =
-  let f = matchesSuffixOf unify
+  let f = matchesSuffixOf (flip $ maybe True . (==))
   in getPattern as `f` getLabels bs
 
 -- |Show the ASCII form of a domain name

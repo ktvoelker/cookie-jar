@@ -8,7 +8,6 @@ import System.Exit
 import qualified Network.DNS.Public as P
 
 import Public
-import Util
 
 import Simple
 import Domain
