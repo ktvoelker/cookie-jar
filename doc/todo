@@ -2,6 +2,8 @@
 To-Do
 =====
 
+* Add a printer for Set-Cookie headers which meets Section 4 requirements
+
 * Add another parser for Set-Cookie headers which only accepts cookies that meet the
   strict criteria specified in Section 4 (Server Requirements)
   * As part of this, use a strict date parser (RFC-2616, Section 3.3.1)
